@@ -31,7 +31,6 @@
             font-size: 13px;
         }
 
-        /* 顶部导航 */
         .top-nav {
             background: var(--panel-bg);
             border-bottom: 1px solid var(--border);
@@ -64,34 +63,20 @@
         }
         .btn-run:hover { background: #2ea043; }
 
-        /* 内容布局 */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .grid-container { flex: 1; overflow: auto; padding: 10px; }
 
         table { width: 100%; border-collapse: collapse; }
         th { background: #21262d; text-align: left; padding: 10px; position: sticky; top: 0; border-bottom: 2px solid var(--border); z-index: 10;}
         td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
-        tr { transition: background 0.2s; }
-        tbody tr:hover { background-color: rgba(110, 118, 129, 0.1); cursor: pointer; }
+        tr:hover { background-color: rgba(110, 118, 129, 0.1); cursor: pointer; }
 
-        /* Badges for Methods */
         .method-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid; font-weight: 600; }
-        
         .badge-actual { background: rgba(88, 166, 255, 0.15); color: var(--blue); border-color: rgba(88, 166, 255, 0.3); }
-        
-        /* Greeks / Revaluation */
         .badge-greeks { background: rgba(163, 113, 247, 0.15); color: var(--purple); border-color: rgba(163, 113, 247, 0.3); }
         .badge-reval { background: rgba(210, 153, 34, 0.15); color: var(--yellow); border-color: rgba(210, 153, 34, 0.3); }
+        .badge-fallback { background: rgba(110, 118, 129, 0.1); color: var(--grey); border-color: var(--border); border-style: dashed;}
 
-        /* Fallback */
-        .badge-fallback { 
-            background: rgba(110, 118, 129, 0.1); 
-            color: var(--grey); 
-            border-color: var(--border); 
-            border-style: dashed;
-        }
-
-        /* 底部面板 */
         .analysis-drawer {
             height: 300px; background: #0d1117; border-top: 1px solid var(--border);
             display: flex; padding: 15px; gap: 20px;
@@ -100,18 +85,16 @@
         .chart-wrapper { flex: 2; position: relative; display: flex; align-items: center; justify-content: center; background: #010409; border: 1px solid var(--border); border-radius: 6px;}
         .chart-box { width: 100%; height: 100%; }
         
-        /* 遮罩层：用于 Fallback 数据 */
         .no-data-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(13, 17, 23, 0.95);
-            display: none; /* 默认隐藏 */
+            display: none;
             flex-direction: column; align-items: center; justify-content: center;
             color: var(--text-dim); z-index: 20;
         }
 
         .stats-box { flex: 1; background: #161b22; border-radius: 8px; padding: 15px; border: 1px solid var(--border); overflow-y: auto;}
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dotted var(--border); padding-bottom: 5px; }
-        
         .warn-text { color: var(--yellow); font-size: 11px; margin-top: 5px; display: none; }
     </style>
 </head>
@@ -131,13 +114,17 @@
             <select id="accountSelect" disabled onchange="handleAccountChange()">
                 <option value="">-- Select Customer First --</option>
             </select>
+            <select id="posBasis">
+                <option value="Real-time">Real-time Pos</option>
+                <option value="EOD">EOD (T-1) Pos</option>
+            </select>
         </div>
 
         <div class="param-section">
             <span class="label">Params</span>
             <select id="lookback"><option value="252">1Y (252D)</option></select>
             <select id="confidence"><option value="0.99">99% Conf</option></select>
-            </select><input type="text" id="pnl_days" value="1D" style="width: 30px; text-align: center;" title="Holding Period"></select>
+            <input type="text" id="pnl_days" value="1D" style="width: 30px; text-align: center;" title="Holding Period">
         </div>
     </div>
     <button class="btn-run" onclick="simulateCalc()"><i class="fas fa-play"></i> CALC</button>
@@ -152,7 +139,6 @@
                     <th>VaR (USD)</th>
                     <th>Contribution</th>
                     <th>Method</th>
-                    <th>Scenario PnL</th>
                     <th>days_eff</th>
                 </tr>
             </thead>
@@ -162,7 +148,6 @@
                     <td style="color: var(--red); font-weight: bold;">(1,520,500)</td>
                     <td>100%</td>
                     <td>Aggregated</td>
-                    <td>-1,450,200</td>
                     <td>251</td>
                 </tr>
                 
@@ -171,7 +156,6 @@
                     <td>(980,000)</td>
                     <td>64.5%</td>
                     <td><span class="method-badge badge-actual">Actual</span></td>
-                    <td>-1,020,000</td>
                     <td>251</td>
                 </tr>
 
@@ -180,7 +164,6 @@
                     <td>(120,400)</td>
                     <td>7.9%</td>
                     <td><span class="method-badge badge-greeks">Greeks</span></td>
-                    <td>-145,000</td>
                     <td>251</td>
                 </tr>
 
@@ -189,7 +172,6 @@
                     <td>(85,000)</td>
                     <td>5.6%</td>
                     <td><span class="method-badge badge-reval">Full Reval</span></td>
-                    <td>-92,000</td>
                     <td>251</td>
                 </tr>
 
@@ -198,7 +180,6 @@
                     <td>(335,100)</td>
                     <td>22.0%</td>
                     <td><span class="method-badge badge-fallback">Fallback (30%)</span></td>
-                    <td style="font-style: italic; color: var(--text-dim);">Fixed Rate</td>
                     <td style="color: var(--text-dim);">0</td>
                 </tr>
             </tbody>
@@ -244,13 +225,11 @@
 </div>
 
 <script>
-    // --- Mock Data ---
     const accountData = {
         'AAAA': ['11111-Margin', '11112-Cash'],
         'BBBB': ['22222-Prime']
     };
 
-    // --- Dropdown Logic ---
     function handleCustomerChange() {
         const customerSelect = document.getElementById('customerSelect');
         const accountSelect = document.getElementById('accountSelect');
@@ -275,7 +254,6 @@
         if(val) document.getElementById('portfolioName').innerText = "ACC: " + val;
     }
 
-    // --- Chart Logic ---
     let chart;
     function initChart() {
         const ctx = document.getElementById('varChart').getContext('2d');
@@ -312,29 +290,20 @@
         return { labels, values };
     }
 
-    // --- Detail Update Logic (The Core Request) ---
     function updateDetail(name, type) {
         document.getElementById('detailTitle').innerText = name + (type === 'fallback' ? " Risk Detail" : " Distribution");
-        
         const overlay = document.getElementById('noDataOverlay');
         const normalStats = document.getElementById('normalStats');
         const fallbackStats = document.getElementById('fallbackStats');
 
         if (type === 'fallback') {
-            // 1. 剥离分布图：显示遮罩层
             overlay.style.display = 'flex';
-            
-            // 2. 切换右侧统计面板内容
             normalStats.style.display = 'none';
             fallbackStats.style.display = 'block';
-            
         } else {
-            // 恢复正常模式
             overlay.style.display = 'none';
             normalStats.style.display = 'block';
             fallbackStats.style.display = 'none';
-
-            // 模拟图表刷新
             const newData = chart.data.datasets[0].data.map(v => v * (0.8 + Math.random() * 0.4));
             chart.data.datasets[0].data = newData;
             chart.update();
@@ -342,10 +311,14 @@
     }
 
     function simulateCalc() {
+        const basis = document.getElementById('posBasis').value;
         const btn = document.querySelector('.btn-run');
         const txt = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
-        setTimeout(() => { btn.innerHTML = txt; alert("Calculated!"); }, 500);
+        setTimeout(() => { 
+            btn.innerHTML = txt; 
+            alert(`Calculation Complete!\nBasis: ${basis} Positions`); 
+        }, 500);
     }
 
     window.onload = initChart;
